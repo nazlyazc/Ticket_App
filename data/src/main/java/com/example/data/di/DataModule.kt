@@ -1,24 +1,64 @@
 package com.example.data.di
 
+import android.R.attr.level
 import com.example.core.domain.AuthRepository
 import com.example.data.remote.AuthApi
 import com.example.data.repository.AuthRepositoryImpl
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import org.koin.dsl.module
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
+private const val BASE_URL = "https://tickets-api.halitkalayci.com/"
+
 val dataModule = module {
-    // Retrofit Tanımı
+    // Scope (Kapsam)
+    // 3 temel seçenek
+
+    // Yaşam döngüsündeki bağımlılığın davranış biçimi
+
+    // Single (Singleton) -> Uygulama yaşam döngüsü boyunca tek örnek.
     single {
-        Retrofit.Builder()
-            .baseUrl("https://tickets-api.halitkalayci.com")
-            .addConverterFactory(Json.asConverterFactory("application/json".toMediaType()))
-            .build()
-            .create(AuthApi::class.java)
+        Json {
+            ignoreUnknownKeys = true // Cevapta var olan ama classta olmayan alanları ignore et.
+            explicitNulls = false
+            isLenient = true
+        }
     }
 
-    // Repository Tanımı
-    single<AuthRepository> { AuthRepositoryImpl(get()) }
+    single {
+        HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        }
+    }
+
+    // HTTP isteklerini yönetmek..
+    single {
+        OkHttpClient.Builder()
+            .addInterceptor(get<HttpLoggingInterceptor>())
+            .build()
+    }
+
+    single {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(get<OkHttpClient>())
+            .addConverterFactory(get<Json>().asConverterFactory("application/json".toMediaType()))
+            .build()
+    }
+
+    single { get<Retrofit>().create(AuthApi::class.java) }
+
+    single<AuthRepository> {
+        AuthRepositoryImpl(
+            authApi = get()
+        )
+    }
+
+    // factory -> Her çağırıldığı noktada yeni instance üretir. Her fonksiyon için birer örnek
+
+    // scoped -> Class -> tüm fonksiyonlarına 1 örnek
 }

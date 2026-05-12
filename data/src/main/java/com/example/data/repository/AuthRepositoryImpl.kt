@@ -5,6 +5,7 @@ import com.example.core.domain.AuthSession
 import com.example.core.domain.User
 import com.example.core.domain.UserRole
 import com.example.data.dto.CredentialsDto
+import com.example.data.dto.RegisterRequestDto
 import com.example.data.remote.AuthApi
 import com.example.data.util.runCatchingApi
 import kotlinx.coroutines.flow.Flow
@@ -34,10 +35,20 @@ class AuthRepositoryImpl(
 
 
     override suspend fun register(
+        fullName: String,
         email: String,
         password: String
-    ): Result<AuthSession> {
-        TODO("Not yet implemented")
+    ): Result<Unit> = runCatchingApi {
+
+        authApi.register(
+            RegisterRequestDto(
+                email = email,
+                password = password
+            )
+        )
+        Unit
+    }.onSuccess {
+    }.onFailure {
     }
 
     override suspend fun logout(): Result<Unit> {

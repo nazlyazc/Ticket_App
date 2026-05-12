@@ -10,14 +10,13 @@ import com.example.ticketapp.di.appModule
 class TicketAppApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        startKoin{
+        startKoin {
             androidLogger()
-            androidContext(this@TicketAppApplication)
+            androidContext(this@TicketAppApplication) //
             modules(
-                dataModule,
+                dataModule, // dataModule olarak tanımlanan bağımlılıkları projemde aktif et.
                 appModule
             )
-
         }
     }
 }
